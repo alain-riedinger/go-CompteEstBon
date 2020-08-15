@@ -68,6 +68,31 @@ func main() {
 	}
 }
 
+func findSolution(cpt *Compte, tirage int, plaques []int, sol chan *Solution) {
+	// Initialize the recursive calculation root structure
+	solution := NewSolution()
+	solution.Tirage = tirage
+	solution.Depth = len(plaques)
+	res := NewResult()
+	res.Steps = plaques
+	res.Text = ""
+	res.Value = 0
+	sort.Ints(res.Steps)
+	solution.Current = append(solution.Current, res)
+
+	// Initialize the best approaching structure
+	solution.Best = NewResult()
+	solution.Best.Steps = res.Steps
+	solution.Best.Value = solution.Best.Steps[len(solution.Best.Steps)-1]
+	solution.Best.Text = fmt.Sprintf("%d", solution.Best.Value)
+
+	// Start the recursive resolution
+	solution = cpt.SolveTirage(*solution)
+
+	// Send solution to the channel, while execution in parallel
+	sol <- solution
+}
+
 func newGame(chars int, seconds int) {
 	cpt := NewCompte()
 	plaques := cpt.GetPlaques()
@@ -92,27 +117,13 @@ func newGame(chars int, seconds int) {
 	// Wait for some seconds of think time
 	countup(chars, seconds)
 
+	// Solution is searched during chrono time (it's shorter so no cheating)
+	sol := make(chan *Solution)
+	go findSolution(cpt, tirage, plaques, sol)
+	solution := <-sol
+	close(sol)
+
 	prompt("Want a solution ?")
-
-	// Initialize the recursive calculation root structure
-	solution := NewSolution()
-	solution.Tirage = tirage
-	solution.Depth = len(plaques)
-	res := NewResult()
-	res.Steps = plaques
-	res.Text = ""
-	res.Value = 0
-	sort.Ints(res.Steps)
-	solution.Current = append(solution.Current, res)
-
-	// Initialize the best approaching structure
-	solution.Best = NewResult()
-	solution.Best.Steps = res.Steps
-	solution.Best.Value = solution.Best.Steps[len(solution.Best.Steps)-1]
-	solution.Best.Text = fmt.Sprintf("%d", solution.Best.Value)
-
-	// Start the recursive resolution
-	solution = cpt.SolveTirage(*solution)
 
 	// Output final result
 	state := "Exact"
