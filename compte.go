@@ -136,9 +136,8 @@ func (c *Compte) SolveTirage(solution Solution) *Solution {
 						// Found the exact solution: terminal return
 						if solution.Best.Value == solution.Tirage {
 							return &solution
-						} else {
-							newCur = append(newCur, *res)
 						}
+						newCur = append(newCur, *res)
 					}
 				}
 			}
